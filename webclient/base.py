@@ -1,73 +1,125 @@
 '''This library provides basic webservice client python interfaces.'''
 
 import httplib
+import base64
 import json
-import sys
+
 from urllib import urlencode
 
 __author__ = 'Juan Enrique Munoz Zolotoochin'
 __email__ = 'juanique@gmail.com'
 
 
-class WebClient:
+class HttpResponse(object):
 
-    def __init__(self, server, https=False, parser=json.loads, verbose=False):
-        self.https = https
-        self.server = server
-        self.parser = parser
-        self.verbose = verbose
+    def __init__(self, http_resp):
+        self.parse_response(http_resp)
 
-    def _api_call(self, method, service, headers={}, **kwargs):
-        '''Executes the HTTP request to the webservice and return
-        the json-parsed response'''
+    def parse_response(self, http_resp):
+        self.http_resp = http_resp
+        self.content = self.http_resp.read()
 
-        uri = "%s?%s" % (service, urlencode(kwargs))
-        conn = self.get_connection()
-        conn.request(method, uri, headers=headers)
-        response = conn.getresponse()
-        return response
+        try:
+            self.data = json.loads(self.content)
+        except ValueError:
+            pass
 
-    def get_connection(self):
-        '''Return a connection object to the webservice.'''
-        if self.https:
-            conn_class = httplib.HTTPSConnection
-        else:
-            conn_class = httplib.HTTPConnection
+    @property
+    def status_code(self):
+        return self.http_resp.status
 
-        class Connection(conn_class):
 
-            def __init__(self, verbose, *args, **kwargs):
-                self.verbose = verbose
-                self.response = None
-                conn_class.__init__(self, *args, **kwargs)
+class Connection(object):
+
+    def __init__(self, host, http_conn_class=httplib.HTTPConnection,
+            verbose=False):
+
+        if verbose:
+            http_conn_class = self.create_verbose_conn_class(http_conn_class)
+        self.http_conn = http_conn_class(host)
+
+    def create_verbose_conn_class(self, conn_class):
+
+        class VerboseConnection(conn_class):
+            response = None
 
             def _output(self, s):
-                if self.verbose:
-                    print ">%s" % s
+                print ">%s" % s
                 conn_class._output(self, s)
 
             def request(self, *args, **kwargs):
                 conn_class.request(self, *args, **kwargs)
                 self.response = conn_class.getresponse(self)
 
-                if self.verbose:
-                    for name, value in self.response.getheaders():
-                        print "<%s : %s" % (name, value)
-                    print "<status code: %s" % self.response.status
+                for name, value in self.response.getheaders():
+                    print "<%s : %s" % (name, value)
+                print "<status code: %s" % self.response.status
 
             def getresponse(self):
                 return self.response
 
-        return Connection(self.verbose, self.server)
+        return VerboseConnection
 
-    def get(self, service, headers={}, **kwargs):
-        return self._api_call("GET", "/" + service, headers, **kwargs)
+    def request(self, method, path, headers={}, body=""):
+        if path[0] != '/':
+            path = '/' + path
 
-    def post(self, service, data="", headers={}, **kwargs):
+        self.http_conn.request(method, path, headers=headers, body=body)
+        return HttpResponse(self.http_conn.getresponse())
+
+
+class WebClient(object):
+
+    def __init__(self, host, https=False, verbose=False):
+        self.https = https
+        self.verbose = verbose
+        self._parse_host(host)
+        self.default_headers = {}
+
+        if self.https:
+            self.conn_class = httplib.HTTPSConnection
+        else:
+            self.conn_class = httplib.HTTPConnection
+
+    def authenticate(self, username, password):
+        encoded_credentials = base64.b64encode("%s:%s" % (username, password))
+        auth = "Basic " + encoded_credentials
+        self.default_headers['Authorization'] = auth
+
+    def _parse_host(self, host):
+        https_prefix = "https://"
+        http_prefix = "http://"
+
+        if host.startswith(https_prefix):
+            self.https = True
+            self.host = host.split(https_prefix).pop()
+        elif host.startswith(http_prefix):
+            self.https = False
+            self.host = host.split(http_prefix).pop()
+        else:
+            self.host = host
+
+    def get_connection(self):
+        return Connection(self.host, self.conn_class, verbose=self.verbose)
+
+    def get(self, path, data={}):
         conn = self.get_connection()
-        #conn.set_debuglevel(1)
-        conn.request('POST', "/" + service, body=data, headers=headers)
-        return conn.getresponse()
+        uri = "%s?%s" % (path, urlencode(data))
+
+        headers = dict(self.default_headers)
+
+        return conn.request("GET", uri, headers)
+
+    def post(self, path, data={}, content_type='application/json'):
+        conn = self.get_connection()
+
+        headers = dict(self.default_headers)
+        headers['content-type'] = content_type
+
+        if content_type == "application/json":
+            data = json.dumps(data)
+
+        return conn.request('POST', path, headers, body=data)
 
 
 class WebClientException(Exception):
