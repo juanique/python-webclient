@@ -31,7 +31,7 @@ class HttpResponse(object):
 
 class Connection(object):
 
-    def __init__(self, host, http_conn_class=httplib.HTTPConnection,
+    def __init__(self, host, http_conn_class=httplib.HTTPConnection, port=80,
             verbose=False):
 
         if verbose:
@@ -70,7 +70,8 @@ class Connection(object):
 
 class WebClient(object):
 
-    def __init__(self, host, https=False, verbose=False):
+    def __init__(self, host, https=False, verbose=False, port=80):
+        self.port = port
         self.https = https
         self.verbose = verbose
         self._parse_host(host)
@@ -100,7 +101,7 @@ class WebClient(object):
             self.host = host
 
     def get_connection(self):
-        return Connection(self.host, self.conn_class, verbose=self.verbose)
+        return Connection(self.host, self.conn_class, self.port, verbose=self.verbose)
 
     def get(self, path, data={}):
         conn = self.get_connection()

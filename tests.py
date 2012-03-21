@@ -84,3 +84,7 @@ class WebClientUnitTestAuth(unittest.TestCase):
         response = client.get("test_auth")
         self.assertEqual(response.data['username'], "Aladdin")
         self.assertEqual(response.data['password'], "open sesame")
+
+if __name__ == '__main__':
+    unittest.main()
+
