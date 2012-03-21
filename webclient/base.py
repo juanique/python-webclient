@@ -36,7 +36,7 @@ class Connection(object):
 
         if verbose:
             http_conn_class = self.create_verbose_conn_class(http_conn_class)
-        self.http_conn = http_conn_class(host)
+        self.http_conn = http_conn_class(host, port)
 
     def create_verbose_conn_class(self, conn_class):
 
