@@ -31,12 +31,12 @@ class HttpResponse(object):
 
 class Connection(object):
 
-    def __init__(self, host, http_conn_class=httplib.HTTPConnection, port=80,
+    def __init__(self, host, http_conn_class=httplib.HTTPConnection, port=None,
             verbose=False):
 
         if verbose:
             http_conn_class = self.create_verbose_conn_class(http_conn_class)
-        self.http_conn = http_conn_class(host, port)
+        self.http_conn = http_conn_class(host, port=None)
 
     def create_verbose_conn_class(self, conn_class):
 
@@ -105,11 +105,14 @@ class WebClient(object):
 
     def get(self, path, data={}):
         conn = self.get_connection()
-        uri = "%s?%s" % (path, urlencode(data))
+        full_path = get_path(path, data)
 
         headers = dict(self.default_headers)
 
-        return conn.request("GET", uri, headers)
+        return conn.request("GET", full_path, headers)
+
+    def get_path(self, path, data={}):
+        return"%s?%s" % (path, urlencode(data))
 
     def post(self, path, data={}, content_type='application/json'):
         conn = self.get_connection()
