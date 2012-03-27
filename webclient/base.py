@@ -105,7 +105,7 @@ class WebClient(object):
 
     def get(self, path, data={}):
         conn = self.get_connection()
-        full_path = get_path(path, data)
+        full_path = self.get_path(path, data)
 
         headers = dict(self.default_headers)
 

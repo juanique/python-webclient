@@ -1,0 +1,6 @@
+WebClient.egg-info/PKG-INFO
+WebClient.egg-info/SOURCES.txt
+WebClient.egg-info/dependency_links.txt
+WebClient.egg-info/top_level.txt
+webclient/__init__.py
+webclient/base.py
