@@ -70,7 +70,7 @@ class Connection(object):
 
 class WebClient(object):
 
-    def __init__(self, host, https=False, verbose=False, port=80):
+    def __init__(self, host, https=False, verbose=False, port=None):
         self.port = port
         self.https = https
         self.verbose = verbose
@@ -79,8 +79,10 @@ class WebClient(object):
 
         if self.https:
             self.conn_class = httplib.HTTPSConnection
+            port = port or 443
         else:
             self.conn_class = httplib.HTTPConnection
+            port = port or 80
 
     def authenticate(self, username, password):
         encoded_credentials = base64.b64encode("%s:%s" % (username, password))
