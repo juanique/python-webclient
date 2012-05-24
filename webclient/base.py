@@ -124,6 +124,8 @@ class WebClient(object):
 
         if content_type == "application/json":
             data = json.dumps(data)
+        elif content_type == "multipart/form-data":
+            data = urlencode(data)
 
         return conn.request('POST', path, headers, body=data)
 
