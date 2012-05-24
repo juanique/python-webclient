@@ -3,6 +3,7 @@
 import httplib
 import base64
 import json
+import os
 
 from urllib import urlencode
 
@@ -70,6 +71,8 @@ class Connection(object):
 
 class WebClient(object):
 
+    multipart_boundary = '----------bundary------'
+
     def __init__(self, host, https=False, verbose=False, port=None):
         self.port = port
         self.https = https
@@ -116,17 +119,48 @@ class WebClient(object):
     def get_path(self, path, data={}):
         return"%s?%s" % (path, urlencode(data))
 
-    def post(self, path, data={}, content_type='application/json'):
+    def encode_multipart(self, data, files={}):
+        CRLF = '\r\n'
+        body = []
+
+        for key, value in data.items():
+            body.extend([
+                "--%s" % self.multipart_boundary,
+                'Content-Disposition: form-data; name="%s"' % key,
+                '',
+                value,
+            ])
+
+        for key, filename in files.items():
+            file_name = os.path.basename(filename)
+            with open(filename, 'rb') as f:
+                file_content = f.read()
+
+            body.extend(
+              ['--' + self.multipart_boundary,
+               'Content-Disposition: form-data; name="%s"; filename="%s"'
+               % (key, file_name),
+               'Content-Type: application/octet-stream',
+               '',
+               file_content,
+               ])
+
+        body.extend(['--' + self.multipart_boundary + '--', ''])
+
+        return CRLF.join(body)
+
+    def post(self, path, data={}, content_type='application/json', files={}):
         conn = self.get_connection()
 
         headers = dict(self.default_headers)
-        headers['content-type'] = content_type
 
         if content_type == "application/json":
             data = json.dumps(data)
         elif content_type == "multipart/form-data":
-            data = urlencode(data)
+            content_type = "%s; boundary=%s" % (content_type, self.multipart_boundary)
+            data = self.encode_multipart(data=data, files=files)
 
+        headers['content-type'] = content_type
         return conn.request('POST', path, headers, body=data)
 
 

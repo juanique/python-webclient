@@ -72,6 +72,25 @@ class WebClientUnitTestRequest(unittest.TestCase):
 
         self.assertEqual(response.data, data)
 
+    def test_post_data_multipart(self):
+        "It can POST multipart/form-data"
+
+        data = {"param1": "value1", "param2": "value2"}
+        response = self.client.post("echo_post_multipart", data=data,
+            content_type='multipart/form-data')
+
+        self.assertEqual(response.data, data)
+
+    def test_post_data_multipart_file(self):
+        "It can POST multipart/form-data with attached files"
+
+        data = {"param1": "value1", "param2": "value2"}
+        files = {"textfile" : "fixtures/test1.txt"}
+        response = self.client.post("echo_post_files", data=data,
+            files=files, content_type='multipart/form-data')
+
+        data.update({'textfile': 'Awesome\n'})
+        self.assertEqual(response.data, data)
 
 class WebClientUnitTestAuth(unittest.TestCase):
 
