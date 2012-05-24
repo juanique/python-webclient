@@ -46,7 +46,7 @@ And later use it it like this
     fb = Facebook(access_token="...")
 
     # get the user information
-    fb.get("/me").data
+    print fb.get("/me")
 
     # post a picture to the default app album
     fb.post("/me/photos", data={"message": "Awesome description"},
