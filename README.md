@@ -1,6 +1,6 @@
 #### Examples
 
-## Github
+### Github
     This is how you would add a new key to your github account
 
     from webclient import WebClient
@@ -16,7 +16,7 @@
     client.authenticate(username="gituser", password="gitpassword")
     client.post("/user/keys", data)
 
-## Facebook
+### Facebook
 
 You may want to extend the client to set default headers or parameters
 
@@ -48,5 +48,5 @@ And later use it it like this
     fb.get("/me").data
 
     # post a picture to the default app album
-    fb.post("/me/photos", data=data={"message": "Awesome description"},
+    fb.post("/me/photos", data={"message": "Awesome description"},
         files={"image": "/home/user/awesome.jpg"})
