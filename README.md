@@ -1,7 +1,8 @@
 #### Examples
 
 ### Github
-    This is how you would add a new key to your github account
+
+This is how you would add a new key to your github account
 
     from webclient import WebClient
 
