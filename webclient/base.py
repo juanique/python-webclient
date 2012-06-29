@@ -79,6 +79,7 @@ class WebClient(object):
         self.verbose = verbose
         self._parse_host(host)
         self.default_headers = {}
+        self.multipart_encoding = "utf-8"
 
         if self.https:
             self.conn_class = httplib.HTTPSConnection
@@ -128,7 +129,7 @@ class WebClient(object):
                 "--%s" % self.multipart_boundary,
                 'Content-Disposition: form-data; name="%s"' % key,
                 '',
-                value,
+                value.encode(self.multipart_encoding),
             ])
 
         for key, filename in files.items():
